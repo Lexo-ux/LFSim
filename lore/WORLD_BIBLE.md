@@ -1,6 +1,6 @@
 # LifeSim — World Bible
 
-**CANON — Task 02.** Referencia del mundo futuro, no descripción de V3. Procedencia y estados: [índice canónico](README.md). Conflictos de implementación: [migración](../docs/CANON_MIGRATION.md).
+**CANON — Task 02.** Referencia del mundo futuro, no descripción de V3. Procedencia y estados: [índice canónico](README.md). Conflictos de implementación: [migración](https://github.com/Lexo-ux/lifesim/blob/main/docs/CANON_MIGRATION.md).
 
 ## Identidad
 
@@ -16,7 +16,7 @@ La Primera Apertura hace visibles regiones donde la Tierra se superpone con ento
 
 **PROVISIONAL CANON:** nombre del periodo central: **The Threshold War / La Guerra del Umbral**. Su carácter provisional no vuelve provisionales los principios aprobados del mundo.
 
-El modelo causal aprobado es **PRIVATE CANON — IMPLEMENTED IN TASK 14/14.1**. La especificación completa permanece externa; el runtime entrega evidencia autorizada. Ninguna criatura, institución o clase nombrada aquí permite inferir causas adicionales. Contrato público: [TRUE_RESOLUTION](../docs/TRUE_RESOLUTION.md).
+El modelo causal aprobado es **PRIVATE CANON — IMPLEMENTED IN TASK 14/14.1**. La especificación completa permanece externa; el runtime entrega evidencia autorizada. Ninguna criatura, institución o clase nombrada aquí permite inferir causas adicionales. Contrato público: [TRUE_RESOLUTION](https://github.com/Lexo-ux/lifesim/blob/main/docs/TRUE_RESOLUTION.md).
 
 ## Vidas civiles y vidas despertadas
 
@@ -61,7 +61,7 @@ La guerra necesita contraste: cumpleaños, humor, amistades, romance, familia, c
 
 **CANON — dirección simbólica:** el Umbral representa nacimiento, posibilidad, transición, otra vida, otro mundo y futuros desconocidos.
 
-**Dirección visual para una tarea posterior:** pantalla de título con un Umbral ornamentado dibujado a mano, luz cálida saliendo de la oscuridad y vislumbres de vidas posibles en su interior. Es una metáfora; no demuestra una mecánica literal de reencarnación. Task 02 no modifica pantalla, assets ni animaciones. _Nota de presentación (no canon):_ sustituida por la redirección artística Fisura (luz espectral y contextual a través de fisuras), que conserva el Umbral ornamentado y los vislumbres de vidas; ver [ART_DIRECTION](../docs/ART_DIRECTION.md). El significado CANON no cambia.
+**Dirección visual para una tarea posterior:** pantalla de título con un Umbral ornamentado dibujado a mano, luz cálida saliendo de la oscuridad y vislumbres de vidas posibles en su interior. Es una metáfora; no demuestra una mecánica literal de reencarnación. Task 02 no modifica pantalla, assets ni animaciones. _Nota de presentación (no canon):_ sustituida por la redirección artística Fisura (luz espectral y contextual a través de fisuras), que conserva el Umbral ornamentado y los vislumbres de vidas; ver [ART_DIRECTION](https://github.com/Lexo-ux/lifesim/blob/main/docs/ART_DIRECTION.md). El significado CANON no cambia.
 
 **PROVISIONAL CANON — copy, no lore inmutable:**
 

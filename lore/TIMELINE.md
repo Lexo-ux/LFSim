@@ -30,4 +30,4 @@ Usar las biografías base de [HISTORICAL_NPCS](HISTORICAL_NPCS.md). El reconocim
 
 No hacer inmutables los logros futuros de una figura para mantener el calendario. Identidad estable no significa supervivencia garantizada. No imponer que el jugador cause o presencie cada transición.
 
-El nacimiento fijo de V3 en 2004 no fecha estas eras. Véase [CANON_MIGRATION](../docs/CANON_MIGRATION.md).
+El nacimiento fijo de V3 en 2004 no fecha estas eras. Véase [CANON_MIGRATION](https://github.com/Lexo-ux/lifesim/blob/main/docs/CANON_MIGRATION.md).

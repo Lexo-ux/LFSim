@@ -17,7 +17,7 @@ La exposición a energía vinculada a los Umbrales provoca en una minoría de hu
 
 Son dimensiones conceptuales amplias, suficientes para clases futuras; este documento no fija fórmulas, unidades ni umbrales numéricos de runtime.
 
-Task 06 las representa en runtime con datos semánticos; sus bandas y configuraciones iniciales son decisiones de implementación documentadas en [AWAKENING_SYSTEM](../docs/AWAKENING_SYSTEM.md), no escalas universales canonizadas.
+Task 06 las representa en runtime con datos semánticos; sus bandas y configuraciones iniciales son decisiones de implementación documentadas en [AWAKENING_SYSTEM](https://github.com/Lexo-ux/lifesim/blob/main/docs/AWAKENING_SYSTEM.md), no escalas universales canonizadas.
 
 ## Actividad y función social
 

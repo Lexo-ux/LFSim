@@ -8,7 +8,7 @@ Varias vidas forman parte de LifeSim. La progresión entre vidas debe abrir prin
 
 No aumentar de forma oculta las probabilidades de S/SS/SSS. Una oportunidad narrativa rara y una tirada de rango son sistemas distintos; la primera no justifica manipular la segunda. Véase [RANKS_AND_RARITIES](RANKS_AND_RARITIES.md).
 
-Lo aprendido entre partidas no implica que el siguiente protagonista conozca literalmente todo. La implementación de Tasks 12–14.1 separa conocimiento del personaje, historia del jugador y verdad privada del mundo. Los contratos públicos están en [TRUE_RESOLUTION](../docs/TRUE_RESOLUTION.md); la especificación externa aprobada conserva la autoridad canónica.
+Lo aprendido entre partidas no implica que el siguiente protagonista conozca literalmente todo. La implementación de Tasks 12–14.1 separa conocimiento del personaje, historia del jugador y verdad privada del mundo. Los contratos públicos están en [TRUE_RESOLUTION](https://github.com/Lexo-ux/lifesim/blob/main/docs/TRUE_RESOLUTION.md); la especificación externa aprobada conserva la autoridad canónica.
 
 ## Espacio canónico para anomalías
 
@@ -28,8 +28,8 @@ Esto autoriza posibilidades sutiles, no garantiza que aparezcan en todas las vid
 
 No completar las materias aún reservadas con dioses, máquinas, simulaciones, villanos, entidades u organizaciones supuestas. No establecer un número de vidas ni una secuencia definitiva de revelaciones. «El Archivo» y sus decisiones de V3 no se adoptan como explicación del nuevo mundo.
 
-No se crea repositorio privado ni se publica material privado. Si futuras tareas definen respuestas sensibles, separar la fuente canónica privada de lo que deba distribuirse como runtime público. Véanse [política](README.md) y [migración](../docs/CANON_MIGRATION.md).
+No se crea repositorio privado ni se publica material privado. Si futuras tareas definen respuestas sensibles, separar la fuente canónica privada de lo que deba distribuirse como runtime público. Véanse [política](README.md) y [migración](https://github.com/Lexo-ux/lifesim/blob/main/docs/CANON_MIGRATION.md).
 
 ## Estado de implementación
 
-**PRIVATE CANON — IMPLEMENTED IN TASK 14/14.1**. La especificación externa aprobada y su Addendum siguen siendo la fuente completa; este documento público no reproduce sus respuestas. El runtime entrega evidencia gradual, no conocimiento automático a cada protagonista. Contrato técnico: [TRUE_RESOLUTION](../docs/TRUE_RESOLUTION.md). Las reservas no cubiertas por esa aprobación continúan reservadas.
+**PRIVATE CANON — IMPLEMENTED IN TASK 14/14.1**. La especificación externa aprobada y su Addendum siguen siendo la fuente completa; este documento público no reproduce sus respuestas. El runtime entrega evidencia gradual, no conocimiento automático a cada protagonista. Contrato técnico: [TRUE_RESOLUTION](https://github.com/Lexo-ux/lifesim/blob/main/docs/TRUE_RESOLUTION.md). Las reservas no cubiertas por esa aprobación continúan reservadas.

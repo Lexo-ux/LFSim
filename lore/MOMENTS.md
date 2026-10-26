@@ -1,6 +1,6 @@
 # Especificación narrativa de Moments
 
-**CANON:** un **Moment** es un punto significativo de una vida. Puede abarcar segundos, horas, días, meses o años. La forma visual de tarjeta y la duración actual de V3 no limitan esta definición futura. Contrato ejecutable actual: [docs/CONTENT](../docs/CONTENT.md).
+**CANON:** un **Moment** es un punto significativo de una vida. Puede abarcar segundos, horas, días, meses o años. La forma visual de tarjeta y la duración actual de V3 no limitan esta definición futura. Contrato ejecutable actual: [docs/CONTENT](https://github.com/Lexo-ux/lifesim/blob/main/docs/CONTENT.md).
 
 ## Propósito de interacciones futuras
 

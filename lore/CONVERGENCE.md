@@ -26,4 +26,4 @@ El modelo causal aprobado tiene implementación mediante evidencia escrita para 
 
 ## Estado de implementación
 
-**PRIVATE CANON — IMPLEMENTED IN TASK 14/14.1**. La especificación externa aprobada y su Addendum siguen siendo la fuente completa; este documento público no reproduce sus respuestas. El runtime entrega evidencia gradual, no conocimiento automático a cada protagonista. Contrato técnico: [TRUE_RESOLUTION](../docs/TRUE_RESOLUTION.md). Las reservas no cubiertas por esa aprobación continúan reservadas.
+**PRIVATE CANON — IMPLEMENTED IN TASK 14/14.1**. La especificación externa aprobada y su Addendum siguen siendo la fuente completa; este documento público no reproduce sus respuestas. El runtime entrega evidencia gradual, no conocimiento automático a cada protagonista. Contrato técnico: [TRUE_RESOLUTION](https://github.com/Lexo-ux/lifesim/blob/main/docs/TRUE_RESOLUTION.md). Las reservas no cubiertas por esa aprobación continúan reservadas.
