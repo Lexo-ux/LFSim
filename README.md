@@ -8,12 +8,13 @@ Nuevo comienzo del mundo de [LifeSim](https://github.com/Lexo-ux/lifesim), centr
 - **Vida diaria mínima.** La rutina (estudios, trabajo, dinero, vivienda) aparece solo cuando importa para la historia. No es un bucle de gestión.
 - **El canon manda.** Antes de escribir o diseñar algo, consultar [`lore/`](lore/README.md) y respetar sus etiquetas.
 
-La forma concreta de jugar está por decidir; esta dirección es del proyecto, no canon.
+La historia se plantea como una antología de cinco vidas escritas: ver [historia/ESTRUCTURA.md](historia/ESTRUCTURA.md). La forma concreta de jugar está por decidir; esta dirección es del proyecto, no canon.
 
 ## Estructura
 
 ```text
 lore/        Canon del mundo: World Bible, documentos especializados, reglas y glosario
+historia/    Diseño de la historia (propuestas, no canon)
 AGENTS.md    Reglas para quien trabaje en el repositorio (personas y agentes)
 ```
 
