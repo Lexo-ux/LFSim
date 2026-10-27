@@ -15,6 +15,8 @@ La historia se plantea como una antología de cinco vidas escritas: ver [histori
 ```text
 lore/        Canon del mundo: World Bible, documentos especializados, reglas y glosario
 historia/    Diseño de la historia (propuestas, no canon)
+diseno/      Diseño de la jugabilidad
+prototipos/  Prototipos grises para probar reglas
 AGENTS.md    Reglas para quien trabaje en el repositorio (personas y agentes)
 ```
 

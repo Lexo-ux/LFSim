@@ -1,0 +1,1000 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="robots" content="noindex" />
+    <title>Prototipo · Operación</title>
+    <style>
+      /* Prototipo: arte provisional. Lo que se prueba es el ciclo carta → dificultad → d20. */
+      :root {
+        color-scheme: light dark;
+        --bg: #e6e6e6;
+        --panel: #fff;
+        --ink: #1d1d1d;
+        --muted: #6b6b6b;
+        --line: #b9b9b9;
+        --soft: #f2f2f2;
+        --strong: #2b2b2b;
+        --bad: #9a2f2f;
+        --good: #2f6b3d;
+        --arena: #23262d;
+        --arena-ink: #eef0f4;
+        --glow: #9ec9ff;
+        --card: #f7f5ef;
+        --card-ink: #20222a;
+      }
+      @media (prefers-color-scheme: dark) {
+        :root {
+          --bg: #1b1b1b;
+          --panel: #2a2a2a;
+          --ink: #ececec;
+          --muted: #a3a3a3;
+          --line: #4a4a4a;
+          --soft: #333;
+          --strong: #d8d8d8;
+          --bad: #e08a8a;
+          --good: #8fd19e;
+          --arena: #15171c;
+        }
+      }
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        padding: 12px 16px 40px;
+        background: var(--bg);
+        color: var(--ink);
+        font: 15px/1.45 system-ui, sans-serif;
+      }
+      main { max-width: 860px; margin: 0 auto; }
+      h1 { font-size: 20px; margin: 0 0 6px; }
+      h2 { font-size: 17px; margin: 0 0 6px; }
+      h3 { font-size: 15px; margin: 0 0 4px; }
+      p { margin: 0 0 8px; }
+      .muted, small { color: var(--muted); }
+      .bad { color: var(--bad); }
+      .good { color: var(--good); }
+      .panel {
+        background: var(--panel);
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        padding: 12px;
+        margin-bottom: 10px;
+      }
+      .row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+      .cols { display: grid; gap: 8px; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); }
+      button {
+        font: inherit;
+        color: var(--ink);
+        background: var(--soft);
+        border: 1px solid var(--line);
+        border-radius: 6px;
+        padding: 10px 12px;
+        min-height: 44px;
+        cursor: pointer;
+        text-align: left;
+      }
+      button:hover:not(:disabled) { border-color: var(--strong); }
+      button:disabled { opacity: 0.45; cursor: not-allowed; }
+      button.primary { background: var(--strong); color: var(--panel); border-color: var(--strong); text-align: center; }
+      button:focus-visible { outline: 3px solid var(--glow); outline-offset: 2px; }
+      .tag {
+        display: inline-block;
+        font-size: 12px;
+        padding: 1px 7px;
+        border: 1px solid var(--line);
+        border-radius: 999px;
+        color: var(--muted);
+      }
+      .tag.bad { color: var(--bad); border-color: var(--bad); }
+      .bar { height: 8px; background: rgba(127, 127, 127, 0.25); border-radius: 4px; overflow: hidden; }
+      .bar > i { display: block; height: 100%; background: currentColor; transition: width 0.25s; }
+      .log { font-size: 13px; max-height: 180px; overflow: auto; }
+      .log p { margin: 0 0 3px; }
+
+      /* Escuadra */
+      .squad { display: flex; gap: 8px; flex-wrap: wrap; }
+      .member { flex: 1 1 150px; border: 1px solid var(--line); border-radius: 8px; padding: 6px 8px; font-size: 13px; }
+      .member.down { opacity: 0.45; text-decoration: line-through; }
+      .pips { letter-spacing: 2px; }
+
+      /* Arena */
+      .arena {
+        background: radial-gradient(ellipse at 50% 100%, #2c3a52 0%, var(--arena) 60%);
+        color: var(--arena-ink);
+        border-radius: 12px;
+        padding: 12px;
+        margin-bottom: 10px;
+      }
+      .arena .muted, .arena small { color: #aeb4c0; }
+      .threats { display: grid; gap: 8px; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); }
+      .threat {
+        background: rgba(255, 255, 255, 0.06);
+        border: 1px solid rgba(255, 255, 255, 0.18);
+        border-radius: 10px;
+        padding: 8px 10px;
+        color: inherit;
+        text-align: left;
+        min-height: 0;
+      }
+      .threat.calm { border-style: dashed; }
+      .threat.targetable { border-color: var(--glow); box-shadow: 0 0 0 2px var(--glow), 0 0 18px rgba(158, 201, 255, 0.5); cursor: pointer; }
+      .threat .intent { font-weight: 600; margin-top: 4px; }
+      .threat .bar { color: #e7d8a8; margin: 4px 0; }
+
+      /* La mano que invoca */
+      .summon { position: relative; height: 300px; margin-top: 4px; overflow-x: clip; }
+      .hand-art { position: absolute; left: 50%; bottom: 0; width: 220px; transform: translateX(-50%); pointer-events: none; }
+      .summon.invoked { height: auto; display: grid; justify-items: center; overflow: visible; }
+      .summon.invoked .hand-art { position: static; transform: none; margin-top: -4px; }
+      .summon.invoked .chosen { animation: rise 0.35s ease-out; }
+      @keyframes rise { from { transform: translateY(40px) scale(0.92); opacity: 0; } }
+      .hand-art .aura { animation: aura 3.2s ease-in-out infinite; transform-origin: 110px 70px; }
+      @keyframes aura { 50% { opacity: 0.55; transform: scale(1.08); } }
+      .fan { position: absolute; left: 50%; bottom: 120px; width: 0; height: 0; }
+      .card {
+        position: absolute;
+        left: 0;
+        bottom: 0;
+        width: 104px;
+        height: 140px;
+        margin-left: -52px;
+        padding: 8px 7px;
+        background: var(--card);
+        color: var(--card-ink);
+        border: 1px solid #c9c3b4;
+        border-radius: 10px;
+        box-shadow: 0 6px 18px rgba(0, 0, 0, 0.35), 0 0 22px rgba(158, 201, 255, 0.25);
+        display: grid;
+        grid-template-rows: auto auto 1fr auto;
+        gap: 2px;
+        text-align: center;
+        transform: translateX(var(--dx)) translateY(var(--dy)) rotate(var(--rot));
+        transition: transform 0.25s, box-shadow 0.2s;
+        animation: float 2.8s ease-in-out infinite;
+        animation-delay: var(--delay);
+      }
+      @keyframes float {
+        50% { transform: translateX(var(--dx)) translateY(calc(var(--dy) - 8px)) rotate(var(--rot)); }
+      }
+      .card:hover:not(:disabled), .card:focus-visible {
+        animation-play-state: paused;
+        transform: translateX(var(--dx)) translateY(calc(var(--dy) - 18px)) rotate(0deg) scale(1.06);
+        box-shadow: 0 10px 26px rgba(0, 0, 0, 0.4), 0 0 30px rgba(158, 201, 255, 0.6);
+        z-index: 5;
+      }
+      .card.tight { text-align: left; padding: 8px 6px; }
+      .card.tight .name { font-size: 13px; }
+      .card.tight .glyph { justify-self: start; font-size: 26px; }
+      .card .kind { font-size: 10px; text-transform: uppercase; letter-spacing: 0.06em; color: #6d6a62; }
+      .card .name { font-weight: 700; font-size: 14px; line-height: 1.15; }
+      .card .glyph { font-size: 30px; line-height: 1; align-self: center; }
+      .card .dc { font-size: 11px; color: #4b4a45; }
+      .card.flee { background: #e9e3d6; }
+      .card:disabled { opacity: 0.4; }
+
+      /* Carta invocada */
+      .chosen {
+        display: grid;
+        gap: 8px;
+        background: var(--card);
+        color: var(--card-ink);
+        border-radius: 12px;
+        padding: 12px;
+        box-shadow: 0 0 0 2px var(--glow), 0 0 30px rgba(158, 201, 255, 0.45);
+        margin: 4px auto 0;
+        max-width: 460px;
+      }
+      .chosen .odds { font-size: 22px; font-weight: 700; }
+      .chosen button { color: var(--card-ink); background: #ebe6da; border-color: #c9c3b4; }
+      .chosen button.primary { background: #20222a; color: #f7f5ef; }
+      .chosen label { display: flex; gap: 8px; align-items: center; font-size: 14px; min-height: 32px; }
+      .chosen input { width: 20px; height: 20px; }
+
+      /* d20 */
+      .roll-veil {
+        position: fixed;
+        inset: 0;
+        background: rgba(10, 12, 16, 0.9);
+        display: grid;
+        place-items: center;
+        z-index: 50;
+        padding: 16px;
+      }
+      .roll-box { text-align: center; color: #f3f3f3; display: grid; gap: 10px; justify-items: center; max-width: 360px; }
+      .d20 { width: 150px; height: 150px; }
+      .d20.spin { animation: spin 0.7s cubic-bezier(0.2, 0.7, 0.3, 1); }
+      @keyframes spin { from { transform: rotate(-540deg) scale(0.6); } to { transform: rotate(0) scale(1); } }
+      .verdict { font-size: 22px; font-weight: 700; }
+      .verdict.ok { color: #9be3ac; }
+      .verdict.ko { color: #f2a3a3; }
+
+      .map { display: grid; gap: 8px; }
+      .layer { display: flex; gap: 8px; flex-wrap: wrap; }
+      .node { flex: 1 1 140px; }
+      .node.done { opacity: 0.5; }
+
+      @media (prefers-reduced-motion: reduce) {
+        .card, .hand-art .aura, .d20.spin, .summon.invoked .chosen { animation: none !important; }
+        .card, .bar > i { transition: none !important; }
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>Prototipo · Operación</h1>
+      <p class="muted">
+        Elige una carta, mira su dificultad y lanza el d20. Reglas de la vida 3: eres Despertado de rango D. Diseño en
+        <code>diseno/JUGABILIDAD.md</code>. Contenido NON-CANON EXAMPLE.
+      </p>
+      <div id="app"></div>
+    </main>
+    <script>
+      // ---------- Contenido (datos, separado de la lógica) ----------
+      const CONTENT = {
+        squad: [
+          { id: "tu", name: "Tú", role: "Vanguardia", maxWounds: 3 },
+          { id: "ilse", name: "Ilse", role: "Apoyo", maxWounds: 2 },
+          { id: "bram", name: "Bram", role: "Observación", maxWounds: 2 },
+        ],
+        // Cartas de acción. dc recibe el objetivo (si lo hay) y el combate.
+        cards: {
+          atacar: { name: "Atacar", glyph: "⚔", owner: "tu", target: "threat", text: "Te quedas y golpeas.",
+            win: "−2 aguante (−3 con 20 natural).", dc: (t) => t.def },
+          proteger: { name: "Proteger", glyph: "⛨", owner: "tu", target: "threat", text: "Te interpones en su camino.",
+            win: "Anula su intención esta ronda.", dc: (t) => t.str },
+          nucleo: { name: "Golpe de Núcleo", glyph: "✦", owner: "tu", target: "threat", text: "Canalizas tu Núcleo.",
+            win: "−3 aguante (−4 con 20 natural).", dc: (t) => t.def + 3 },
+          observar: { name: "Observar", glyph: "◉", owner: "bram", target: "threat", text: "Bram busca un punto débil.",
+            win: "Su defensa baja 5 hasta que la golpeéis. Puede dar una pista.", dc: () => 10 },
+          ahuyentar: { name: "Ahuyentar", glyph: "✺", owner: "bram", target: "fauna", text: "Solo fauna: ruido, luz y espacio para irse.",
+            win: "Se marcha sin luchar.", dc: (t) => t.str + 2 },
+          curar: { name: "Curar", glyph: "✚", owner: "ilse", target: "ally", text: "Ilse atiende una herida.",
+            win: "−1 herida.", dc: () => 9 },
+          evacuar: { name: "Evacuar", glyph: "➜", owner: "tu", target: null, text: "Sacas a un civil del peligro.",
+            win: "1 civil a salvo (2 con 20 natural).", dc: () => 8 },
+          huir: { name: "Huir", glyph: "↶", owner: "tu", target: null, fixed: true, text: "Ordenas la retirada.",
+            win: "Termina el combate como retirada. Si falla, os alcanzan.", dc: (_, f) => 6 + 2 * hostileThreats(f).length },
+        },
+        deck: ["atacar", "atacar", "atacar", "proteger", "proteger", "nucleo", "observar", "curar", "ahuyentar"],
+        evacDeck: ["evacuar", "evacuar", "evacuar"],
+        handSize: 5,
+        actionsPerRound: 3,
+        threats: {
+          lobo: { name: "Lobo de ceniza", kind: "fauna", hp: 3, def: 9, str: 9,
+            intents: [{ type: "attack", dmg: 1, target: "weakest" }, { type: "attack", dmg: 1, target: "random" }] },
+          acechador: { name: "Acechador", kind: "depredador", hp: 5, def: 12, str: 13,
+            intents: [{ type: "charge" }, { type: "attack", dmg: 1, target: "random" }, { type: "civilians", n: 1 }] },
+          enjambre: { name: "Enjambre", kind: "fauna", hp: 4, def: 8, str: 11,
+            intents: [{ type: "civilians", n: 1 }, { type: "attack", dmg: 1, target: "random" }, { type: "breach" }] },
+          guardiana: { name: "Guardiana del vado", kind: "pueblo", hp: 6, def: 11, str: 14, calm: true,
+            intents: [{ type: "watch" }], provoked: [{ type: "attack", dmg: 2, target: "random" }] },
+        },
+        encounters: {
+          a_entrada: { name: "Entrada de servicio", goal: "contain", rounds: 4, threats: ["lobo", "lobo"] },
+          a_bombas: { name: "Sala de bombas", goal: "contain", rounds: 5, threats: ["acechador", "lobo"] },
+          a_orilla: { name: "La orilla", goal: "endure", rounds: 3, threats: ["guardiana", "lobo"],
+            note: "Algo grande vigila desde el agua. Detrás, formas pequeñas." },
+          a_final: { name: "Corazón de la brecha", goal: "contain", rounds: 6, threats: ["acechador", "enjambre"], reinforce: "lobo" },
+          b_calle: { name: "Calle de las Grúas", goal: "evacuate", rounds: 4, civilians: 3, threats: ["enjambre", "lobo"] },
+          b_patio: { name: "Patio del colegio", goal: "evacuate", rounds: 5, civilians: 4, threats: ["acechador", "enjambre"] },
+          b_final: { name: "El último autobús", goal: "evacuate", rounds: 5, civilians: 4, threats: ["acechador", "enjambre"] },
+          extraccion: { name: "Extracción", goal: "endure", rounds: 3, threats: ["enjambre", "lobo"],
+            note: "El Umbral se cierra sobre vosotros. Aguantad hasta la salida." },
+        },
+        operations: {
+          bombeo: {
+            name: "Brecha en la estación de bombeo",
+            front: "Línea exterior",
+            brief: "Una brecha crece bajo la estación que da agua a la zona de acogida. Contenedla antes de que se extienda.",
+            ifSkipped: [
+              "Nadie llegó a tiempo a la estación de bombeo. La brecha creció y la línea exterior retrocedió dos calles.",
+              "Un equipo de Bastion contuvo la estación a duras penas. Dos de los suyos no volvieron.",
+            ],
+            layers: [
+              [{ type: "fight", enc: "a_entrada" }],
+              [{ type: "find", id: "lecturas" }, { type: "hazard", id: "pasarela" }],
+              [{ type: "rescue", id: "operarios" }, { type: "contact", id: "orilla" }],
+              [{ type: "rest", id: "control" }, { type: "fight", enc: "a_bombas" }],
+              [{ type: "fight", enc: "a_final", final: true }],
+            ],
+          },
+          gruas: {
+            name: "Evacuar el barrio de las Grúas",
+            front: "Rutas de paso",
+            brief: "El barrio de las Grúas ha quedado dentro del Umbral. Quedan vecinos dentro. Sacad a todos los que podáis.",
+            ifSkipped: [
+              "Sin vuestro equipo, la evacuación de las Grúas se hizo a medias. Una treintena de personas no salió.",
+              "Las Grúas se vaciaron tarde. Las rutas de paso quedaron cortadas durante semanas.",
+            ],
+            layers: [
+              [{ type: "fight", enc: "b_calle" }],
+              [{ type: "rescue", id: "anciano" }, { type: "hazard", id: "grua" }],
+              [{ type: "rest", id: "bar" }, { type: "find", id: "charco" }],
+              [{ type: "fight", enc: "b_patio" }, { type: "rescue", id: "nina" }],
+              [{ type: "fight", enc: "b_final", final: true }],
+            ],
+          },
+        },
+        nodes: {
+          lecturas: { name: "Tubería rota", text: "Los instrumentos de Bram suben y bajan a destiempo cerca de la tubería. Nadie sabe qué miden.",
+            keep: "Guardáis la lectura completa.", pista: "Lecturas que suben y bajan a destiempo" },
+          charco: { name: "Charco que no refleja", text: "En mitad de la calle, un charco que no refleja el cielo. El agua está tibia.",
+            keep: "Sacáis una muestra en un frasco sellado.", pista: "Agua que no refleja el cielo" },
+          pasarela: { name: "Pasarela colgante", text: "La pasarela sobre los depósitos cruje. Rodear cuesta tiempo.", dc: 11 },
+          grua: { name: "Grúa inclinada", text: "Una grúa se ha doblado sobre la calle. Pasar por debajo es rápido y peligroso.", dc: 12 },
+          operarios: { name: "Operarios atrapados", text: "Tres operarios se han encerrado en un cuarto de máquinas. Sacarlos llevará material y suerte.", dc: 9, saves: 3 },
+          anciano: { name: "Un anciano en el tercero", text: "Un hombre mayor se niega a dejar su piso sin su mujer, que murió hace años.", dc: 10, saves: 1 },
+          nina: { name: "Una niña y su perro", text: "Una niña no quiere salir sin su perro, que ha huido hacia el patio.", dc: 11, saves: 1 },
+          control: { name: "Sala de control", text: "Una puerta que cierra. Unos minutos para respirar." },
+          bar: { name: "El portal de un bar", text: "Persiana medio bajada, sillas apiladas. Alguien dejó café en un termo." },
+          orilla: { name: "La orilla", text: "Algo grande vigila desde el agua. Detrás, formas pequeñas se esconden entre las tuberías.",
+            pista: "Algo protegía a sus crías" },
+        },
+      };
+
+      // ---------- Utilidades ----------
+      const seed = Number(new URLSearchParams(location.search).get("semilla")) || Math.floor(Math.random() * 1e6) + 1;
+      function rng(s) {
+        let a = s >>> 0;
+        return () => {
+          a = (a + 0x6d2b79f5) >>> 0;
+          let t = Math.imul(a ^ (a >>> 15), a | 1);
+          t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+          return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+        };
+      }
+      const R = rng(seed);
+      const roll = (n) => 1 + Math.floor(R() * n);
+      const pick = (list) => list[Math.floor(R() * list.length)];
+      const shuffle = (list) => {
+        const out = list.slice();
+        for (let i = out.length - 1; i > 0; i--) {
+          const j = Math.floor(R() * (i + 1));
+          [out[i], out[j]] = [out[j], out[i]];
+        }
+        return out;
+      };
+      const reduceMotion = matchMedia("(prefers-reduced-motion: reduce)").matches;
+      function el(tag, attrs, ...kids) {
+        const n = document.createElement(tag);
+        for (const [k, v] of Object.entries(attrs || {})) {
+          if (v == null || v === false) continue;
+          if (k.startsWith("on")) n.addEventListener(k.slice(2), v);
+          else if (k === "class") n.className = v;
+          else if (k === "style") n.setAttribute("style", v);
+          else n.setAttribute(k, v === true ? "" : v);
+        }
+        for (const k of kids.flat()) if (k != null && k !== false) n.append(k instanceof Node ? k : String(k));
+        return n;
+      }
+      const svg = (markup) => {
+        const t = document.createElement("template");
+        t.innerHTML = markup.trim();
+        return t.content.firstChild;
+      };
+      // Probabilidad de superar una dificultad con 1d20: el 1 siempre falla y el 20 siempre acierta.
+      const chance = (dc) => Math.max(1, Math.min(19, 21 - dc)) / 20;
+      const pct = (dc) => `${Math.round(chance(dc) * 100)} %`;
+
+      // ---------- Estado ----------
+      const S = {
+        screen: "front",
+        op: null,
+        skipped: null,
+        layer: 0,
+        path: [],
+        instability: 0,
+        maxInstability: 6,
+        supplies: 3,
+        squad: CONTENT.squad.map((m) => ({ ...m, wounds: 0, trust: 0 })),
+        stress: 0,
+        crisis: 0,
+        pistas: [],
+        saved: 0,
+        lost: 0,
+        log: [],
+        fight: null,
+        event: null,
+        choice: null, // carta elegida: { card, target, effort, overload, onRoll }
+        rolling: null,
+        result: null,
+        fightsWon: 0,
+        fightsTotal: 0,
+      };
+      const log = (msg, cls) => S.log.unshift({ msg, cls });
+      const member = (id) => S.squad.find((m) => m.id === id);
+      const isUp = (m) => m.wounds < m.maxWounds;
+      const standing = () => S.squad.filter(isUp);
+      const me = () => member("tu");
+
+      // ---------- Frente y mapa ----------
+      function chooseOp(id) {
+        S.op = id;
+        S.skipped = Object.keys(CONTENT.operations).find((k) => k !== id);
+        S.screen = "map";
+        log(`Aceptas la operación: ${CONTENT.operations[id].name}.`);
+        render();
+      }
+
+      function enterNode(node) {
+        S.path.push(node);
+        S.instability++;
+        if (S.instability >= S.maxInstability && !node.final) {
+          log("La inestabilidad llega al máximo. Hay que salir ya.", "bad");
+          return startFight("extraccion", { extraction: true });
+        }
+        if (node.type === "fight") return startFight(node.enc, { final: node.final });
+        S.event = node;
+        S.screen = "event";
+        render();
+      }
+
+      function nextLayer() {
+        S.layer++;
+        S.event = null;
+        S.fight = null;
+        S.choice = null;
+        if (!isUp(me())) return finish("fallen");
+        if (S.layer >= CONTENT.operations[S.op].layers.length) return finish();
+        S.screen = "map";
+        render();
+      }
+
+      // ---------- Cartas de los nodos del mapa ----------
+      // Cada opción de un nodo es una carta: las que tienen dificultad se resuelven con el d20.
+      function eventCards(n) {
+        const d = CONTENT.nodes[n.id];
+        const c = (name, glyph, text, win, act, dc, disabled) => ({ name, glyph, text, win, act, dc, disabled, kind: "decisión" });
+        if (n.type === "hazard")
+          return [
+            c("Cruzar", "⤳", d.text, "Pasáis sin perder tiempo. Si falla, alguien se hiere.", (ok) => {
+              if (ok) log(`${d.name}: pasáis.`, "good");
+              else { const v = pick(standing()); v.wounds++; log(`${d.name}: ${v.name} cae y se hiere.`, "bad"); }
+              nextLayer();
+            }, d.dc),
+            c("Rodear", "↺", "Más lento, pero seguro.", "Inestabilidad +1.", () => { S.instability++; log(`${d.name}: rodeáis.`); nextLayer(); }),
+          ];
+        if (n.type === "rescue")
+          return [
+            c("Sacarlos", "✋", d.text, "Cuesta 1 suministro. Si falla, no salen y te pesa (estrés +1).", (ok) => {
+              S.supplies--;
+              if (ok) { S.saved += d.saves; log(`${d.name}: los sacáis.`, "good"); }
+              else { S.lost += d.saves; S.stress = Math.min(3, S.stress + 1); log(`${d.name}: no lo conseguís.`, "bad"); }
+              nextLayer();
+            }, d.dc, S.supplies < 1),
+            c("Marcar su posición", "⚑", "Otro equipo vendrá. Quizá.", "Sin coste. No sabréis si llegaron.", () => {
+              S.lost += d.saves; log(`${d.name}: marcáis la posición para otro equipo.`); nextLayer();
+            }),
+          ];
+        if (n.type === "find")
+          return [
+            c("Guardar la muestra", "⚗", d.text, "−1 suministro, +1 pista.", () => {
+              S.supplies--; S.pistas.push(d.pista); log(`${d.name}: ${d.keep} Pista: «${d.pista}».`, "good"); nextLayer();
+            }, null, S.supplies < 1),
+            c("Anotar y seguir", "✎", "Lo apuntas en el cuaderno.", "Sin coste.", () => { log(`${d.name}: lo anotáis.`); nextLayer(); }),
+          ];
+        if (n.type === "contact")
+          return [
+            c("Bajar las armas", "☉", d.text, "Retrocedéis despacio. Inestabilidad +1.", () => {
+              S.instability++; S.pistas.push(d.pista); log(`Nadie ataca. Pista: «${d.pista}».`, "good"); nextLayer();
+            }),
+            c("Prepararse", "⚔", "No os fiáis.", "Empieza un enfrentamiento.", () => startFight("a_orilla")),
+          ];
+        if (n.type === "rest") {
+          const cards = S.squad.filter((m) => m.wounds > 0).map((m) =>
+            c(`Curar a ${m.name}`, "✚", d.text, "−1 suministro, −1 herida.", () => {
+              S.supplies--; m.wounds--; log(`Curáis a ${m.name}.`, "good"); nextLayer();
+            }, null, S.supplies < 1));
+          cards.push(c("Respirar", "≋", d.text, "Estrés −1.", () => { S.stress = Math.max(0, S.stress - 1); log("Respiráis."); nextLayer(); }));
+          for (const m of S.squad.filter((x) => x.id !== "tu" && !x.trust))
+            cards.push(c(`Hablar con ${m.name}`, "❝", "Unos minutos de verdad.", `Sus cartas serán 2 puntos más fáciles.`, () => {
+              m.trust = 1; log(`Hablas con ${m.name}. Confiáis más el uno en el otro.`, "good"); nextLayer();
+            }));
+          return cards;
+        }
+        return [];
+      }
+
+      // ---------- Enfrentamiento ----------
+      function startFight(id, opts = {}) {
+        const enc = CONTENT.encounters[id];
+        S.fightsTotal++;
+        const deck = CONTENT.deck.concat(enc.goal === "evacuate" ? CONTENT.evacDeck : []);
+        S.fight = {
+          id, enc, ...opts, round: 1, actions: 0,
+          civilians: enc.civilians || 0, rescued: 0, lostHere: 0, breach: 0,
+          threats: enc.threats.map((t, i) => spawn(t, `${t}${i}`, i)),
+          deckBase: deck, draw: shuffle(deck), hand: [], blocked: new Set(),
+        };
+        S.screen = "fight";
+        S.choice = null;
+        newRound(true);
+        render();
+      }
+      function spawn(key, uid, step = 0) {
+        const base = CONTENT.threats[key];
+        return { uid, ...base, hpMax: base.hp, step, weak: false, charged: false, provoked: false, gone: false, target: null };
+      }
+
+      const hostileThreats = (f) => f.threats.filter((t) => !t.gone && t.hp > 0 && !(t.calm && !t.provoked));
+      const activeThreats = () => S.fight.threats.filter((t) => !t.gone && t.hp > 0);
+      const ownerUp = (key) => isUp(member(CONTENT.cards[key].owner));
+
+      function newRound(first) {
+        const f = S.fight;
+        f.actions = 0;
+        f.blocked = new Set();
+        // Roba la mano: solo cartas de quienes siguen en pie.
+        f.hand = [];
+        let guard = 0;
+        while (f.hand.length < CONTENT.handSize && guard++ < 40) {
+          if (!f.draw.length) f.draw = shuffle(f.deckBase);
+          const key = f.draw.pop();
+          if (ownerUp(key)) f.hand.push({ key, id: `${key}-${f.round}-${f.hand.length}` });
+        }
+        f.hand.push({ key: "huir", id: `huir-${f.round}` });
+        chooseTargets();
+        if (!first) log(`— Ronda ${f.round} —`);
+      }
+
+      function intentOf(t) {
+        if (t.calm && !t.provoked) return t.intents[0];
+        if (t.kind === "fauna" && t.hp <= 1) return { type: "flee" };
+        if (t.charged) return { type: "attack", dmg: 2, target: "random" };
+        const list = t.provoked ? t.provoked : t.intents;
+        return list[t.step % list.length];
+      }
+      function chooseTargets() {
+        for (const t of activeThreats()) {
+          const i = intentOf(t);
+          if (i.type !== "attack") { t.target = null; continue; }
+          const pool = standing();
+          t.target = i.target === "weakest"
+            ? pool.slice().sort((a, b) => b.wounds / b.maxWounds - a.wounds / a.maxWounds)[0].id
+            : pick(pool).id;
+        }
+      }
+      function intentText(t) {
+        const i = intentOf(t);
+        const who = t.target ? ` a ${member(t.target).name}` : "";
+        return {
+          attack: `Atacar${who} (${i.dmg} herida${i.dmg > 1 ? "s" : ""})`,
+          charge: "Cargar: la próxima ronda golpea por 2",
+          civilians: "Ir a por los civiles",
+          breach: "Ensanchar la brecha",
+          watch: "Vigilar. No ataca si no la atacáis",
+          flee: "Huir",
+        }[i.type];
+      }
+
+      // Dificultad final de una carta con sus modificadores.
+      function difficulty(choice) {
+        const c = CONTENT.cards[choice.card];
+        const t = choice.target && S.fight.threats.find((x) => x.uid === choice.target);
+        if (c.target && c.target !== "ally" && !t) return null;
+        let dc = c.dc(t, S.fight);
+        const mods = [];
+        if (t && t.weak && ["atacar", "nucleo", "proteger"].includes(choice.card)) { dc -= 5; mods.push("punto débil −5"); }
+        const owner = member(c.owner);
+        if (owner.trust && owner.id !== "tu") { dc -= 2; mods.push("confianza −2"); }
+        if (choice.effort) { dc -= 3; mods.push("esfuerzo −3"); }
+        if (choice.overload) { dc -= 6; mods.push("sobrecarga −6"); }
+        if (S.stress >= 3 && owner.id === "tu") { dc += 2; mods.push("estrés +2"); }
+        return { dc: Math.max(2, Math.min(20, dc)), mods };
+      }
+
+      function chooseCard(handCard) {
+        const c = CONTENT.cards[handCard.key];
+        S.choice = { card: handCard.key, handId: handCard.id, target: null, effort: false, overload: false };
+        if (c.target === "ally") {
+          const hurt = S.squad.filter((m) => m.wounds > 0 && isUp(m));
+          if (hurt.length === 1) S.choice.target = hurt[0].id;
+        }
+        const targets = targetsFor(handCard.key);
+        if (c.target && c.target !== "ally" && targets.length === 1) S.choice.target = targets[0].uid;
+        render();
+      }
+      function targetsFor(key) {
+        const c = CONTENT.cards[key];
+        if (c.target === "threat") return activeThreats();
+        if (c.target === "fauna") return activeThreats().filter((t) => t.kind === "fauna");
+        return [];
+      }
+      function canPlay(key) {
+        const c = CONTENT.cards[key];
+        if (!ownerUp(key)) return false;
+        if (c.target === "fauna" && !targetsFor(key).length) return false;
+        if (c.target === "ally" && !S.squad.some((m) => m.wounds > 0 && isUp(m))) return false;
+        if (key === "evacuar" && S.fight.rescued >= S.fight.civilians) return false;
+        return true;
+      }
+
+      // Lanza el d20 para la carta elegida (combate) o para una carta de decisión (mapa).
+      function throwDie(dc, label, then) {
+        const n = roll(20);
+        const ok = n === 20 || (n !== 1 && n >= dc);
+        S.rolling = { n, dc, ok, label, crit: n === 20, fumble: n === 1, then, settled: reduceMotion };
+        render();
+        if (!reduceMotion) setTimeout(() => { if (S.rolling) { S.rolling.settled = true; render(); } }, 750);
+      }
+      function settleRoll() {
+        const r = S.rolling;
+        S.rolling = null;
+        r.then(r);
+      }
+
+      function playChoice() {
+        const ch = S.choice;
+        const c = CONTENT.cards[ch.card];
+        const d = difficulty(ch);
+        if (!d) return;
+        if (ch.effort) S.stress = Math.min(3, S.stress + 1);
+        if (ch.overload) {
+          S.crisis++;
+          if (S.crisis >= 3) { me().wounds++; S.crisis = 0; log("Tu Núcleo se desborda: herida grave.", "bad"); }
+        }
+        throwDie(d.dc, c.name, (r) => resolveCard(ch, r));
+      }
+
+      function resolveCard(ch, r) {
+        const f = S.fight;
+        const c = CONTENT.cards[ch.card];
+        const t = ch.target && f.threats.find((x) => x.uid === ch.target);
+        const ally = ch.target && member(ch.target);
+        const tag = `${c.name} (${r.n} vs ${r.dc})`;
+        if (r.fumble) { S.stress = Math.min(3, S.stress + 1); }
+        if (!r.ok) log(`${tag}: falla.${r.fumble ? " Pifia: estrés +1." : ""}`, "bad");
+        else if (ch.card === "atacar" || ch.card === "nucleo") {
+          const dmg = (ch.card === "nucleo" ? 3 : 2) + (r.crit ? 1 : 0);
+          t.hp = Math.max(0, t.hp - dmg);
+          t.weak = false;
+          if (t.calm) t.provoked = true;
+          log(`${tag}: −${dmg} aguante a ${t.name}.${t.hp === 0 ? " Cae." : ""}`, "good");
+        } else if (ch.card === "proteger") { f.blocked.add(t.uid); log(`${tag}: frenas a ${t.name}.`, "good"); }
+        else if (ch.card === "observar") {
+          t.weak = true;
+          log(`${tag}: punto débil en ${t.name}.`, "good");
+          if (r.crit && !S.pistas.includes("Un patrón en sus movimientos")) { S.pistas.push("Un patrón en sus movimientos"); log("Bram anota algo raro: +1 pista.", "good"); }
+        } else if (ch.card === "ahuyentar") { t.gone = true; log(`${tag}: ${t.name} se marcha sin luchar.`, "good"); }
+        else if (ch.card === "curar") { ally.wounds = Math.max(0, ally.wounds - 1); log(`${tag}: ${ally.name} −1 herida.`, "good"); }
+        else if (ch.card === "evacuar") {
+          const n = Math.min(r.crit ? 2 : 1, f.civilians - f.rescued);
+          f.rescued += n;
+          log(`${tag}: ${n} civil${n === 1 ? "" : "es"} a salvo.`, "good");
+        } else if (ch.card === "huir") {
+          log(`${tag}: os retiráis.`, "bad");
+          S.choice = null;
+          return endFight("retreat");
+        }
+        if (ch.card === "huir" && !r.ok) {
+          const v = pick(standing());
+          v.wounds++;
+          log(`Os alcanzan: ${v.name} se hiere.`, "bad");
+        }
+        f.hand = f.hand.filter((h) => h.id !== ch.handId);
+        S.choice = null;
+        f.actions++;
+        const out = outcome();
+        if (out) return endFight(out);
+        if (f.actions >= CONTENT.actionsPerRound) return enemyPhase();
+        render();
+      }
+
+      function enemyPhase() {
+        const f = S.fight;
+        S.choice = null;
+        for (const t of activeThreats()) {
+          const i = intentOf(t);
+          if (f.blocked.has(t.uid) && i.type !== "flee") { t.charged = false; t.step++; continue; }
+          if (i.type === "attack") {
+            const m = member(t.target);
+            if (m && isUp(m)) {
+              m.wounds = Math.min(m.maxWounds, m.wounds + i.dmg);
+              log(`${t.name} hiere a ${m.name}.${isUp(m) ? "" : " Cae."}`, "bad");
+            }
+            t.charged = false;
+          } else if (i.type === "charge") { t.charged = true; log(`${t.name} se prepara para cargar.`); }
+          else if (i.type === "civilians" && f.civilians - f.rescued > 0) {
+            f.civilians--; f.lostHere++; S.lost++;
+            log(`${t.name} alcanza a un civil.`, "bad");
+          } else if (i.type === "breach") { f.breach++; log(`${t.name} ensancha la brecha (${f.breach}/3).`, "bad"); }
+          else if (i.type === "flee") { t.gone = true; log(`${t.name} huye.`); }
+          if (i.type !== "charge") t.step++;
+        }
+        f.round++;
+        if (f.enc.reinforce && f.round === 3) {
+          f.threats.push(spawn(f.enc.reinforce, `${f.enc.reinforce}-r`));
+          log(`Llega un refuerzo: ${CONTENT.threats[f.enc.reinforce].name}.`, "bad");
+        }
+        const out = outcome();
+        if (out) return endFight(out);
+        newRound();
+        render();
+      }
+
+      function outcome() {
+        const f = S.fight;
+        if (!isUp(me())) return "fallen";
+        if (f.breach >= 3) return "failed";
+        if (f.enc.goal === "contain" && !hostileThreats(f).length) return "completed";
+        if (f.enc.goal === "evacuate" && f.civilians > 0 && f.rescued >= f.civilians) return f.lostHere ? "partial" : "completed";
+        if (f.enc.goal === "evacuate" && f.civilians === 0) return "failed";
+        if (f.round > f.enc.rounds) {
+          if (f.enc.goal === "endure") return "completed";
+          if (f.enc.goal === "evacuate") return f.rescued > 0 ? "partial" : "failed";
+          return "partial";
+        }
+        return null;
+      }
+
+      function endFight(out) {
+        const f = S.fight;
+        if (f.enc.goal === "evacuate") { S.saved += f.rescued; S.lost += Math.max(0, f.civilians - f.rescued); }
+        if (out === "completed") S.fightsWon++;
+        const label = { completed: "completado", partial: "parcial", failed: "fallido", retreat: "retirada", fallen: "caído" }[out];
+        log(`${f.enc.name}: ${label}.`, out === "completed" ? "good" : "bad");
+        if (out === "fallen") return finish("fallen");
+        if (out === "retreat") return finish("retreat");
+        if (f.extraction) return finish(f.final ? out : "extracted");
+        if (f.final) return finish(out);
+        nextLayer();
+      }
+
+      function finish(reason) {
+        S.screen = "result";
+        S.result = reason || "completed";
+        S.choice = null;
+        render();
+      }
+
+      // ---------- Presentación ----------
+      const HAND_SVG = `
+        <svg class="hand-art" viewBox="0 0 220 140" aria-hidden="true">
+          <defs>
+            <radialGradient id="aura" cx="50%" cy="50%" r="50%">
+              <stop offset="0%" stop-color="#cfe4ff" stop-opacity="0.9"/>
+              <stop offset="100%" stop-color="#9ec9ff" stop-opacity="0"/>
+            </radialGradient>
+          </defs>
+          <ellipse class="aura" cx="110" cy="40" rx="100" ry="38" fill="url(#aura)"/>
+          <path d="M58 132 C52 108 46 92 40 78 C36 68 46 62 53 70 L66 90 L64 46 C64 37 76 37 77 46 L80 82
+                   L84 36 C85 27 97 27 97 37 L96 80 L102 40 C104 31 116 32 115 42 L110 84 L120 52 C123 44 134 47 131 56
+                   L120 100 C116 118 110 128 104 132 Z"
+                fill="#c9cfd9" fill-opacity="0.12" stroke="#cfe4ff" stroke-width="2.2" stroke-linejoin="round"/>
+          <path d="M70 116 C84 110 98 110 110 114" fill="none" stroke="#cfe4ff" stroke-opacity="0.5" stroke-width="1.5"/>
+        </svg>`;
+
+      function squadBar() {
+        return el("div", { class: "panel" },
+          el("div", { class: "row", style: "margin-bottom:6px" },
+            el("strong", {}, CONTENT.operations[S.op]?.name || "Escuadra"),
+            el("span", { class: "tag" }, `Suministros ${S.supplies}`),
+            el("span", { class: `tag ${S.instability >= 4 ? "bad" : ""}` }, `Inestabilidad ${S.instability}/${S.maxInstability}`),
+            el("span", { class: `tag ${S.stress >= 3 ? "bad" : ""}` }, `Estrés ${S.stress}/3`),
+            el("span", { class: `tag ${S.crisis >= 2 ? "bad" : ""}` }, `Crisis del Núcleo ${S.crisis}/3`),
+            S.pistas.length ? el("span", { class: "tag" }, `Pistas ${S.pistas.length}`) : null),
+          el("div", { class: "squad" }, S.squad.map((m) => {
+            const target = S.choice && CONTENT.cards[S.choice.card]?.target === "ally" && m.wounds > 0 && isUp(m);
+            return el(target ? "button" : "div", {
+              class: `member ${isUp(m) ? "" : "down"}`,
+              onclick: target ? () => { S.choice.target = m.id; render(); } : null,
+              style: target ? "box-shadow:0 0 0 2px var(--glow)" : null,
+            },
+              el("strong", {}, `${m.name} · ${m.role}`),
+              el("div", { class: "pips", "aria-label": `${m.wounds} de ${m.maxWounds} heridas` },
+                "♥".repeat(m.maxWounds - m.wounds) + "♡".repeat(m.wounds)),
+              m.trust ? el("small", {}, "confianza") : null);
+          })));
+      }
+
+      function render() {
+        const app = document.getElementById("app");
+        app.replaceChildren();
+        if (S.screen === "front") renderFront(app);
+        else {
+          app.append(squadBar());
+          if (S.screen === "map") renderMap(app);
+          if (S.screen === "event") renderEvent(app);
+          if (S.screen === "fight") renderFight(app);
+          if (S.screen === "result") renderResult(app);
+          app.append(el("div", { class: "panel log" }, S.log.slice(0, 40).map((l) => el("p", { class: l.cls || "" }, l.msg))));
+        }
+        if (S.rolling) app.append(rollOverlay());
+      }
+
+      function renderFront(app) {
+        app.append(el("div", { class: "panel" },
+          el("h2", {}, "Frente · elige una operación"),
+          el("p", { class: "muted" }, "Solo podéis hacer una. La otra se resolverá sin vosotros."),
+          el("div", { class: "cols" }, Object.entries(CONTENT.operations).map(([id, op]) =>
+            el("button", { onclick: () => chooseOp(id) },
+              el("span", { class: "tag" }, op.front), el("h3", {}, op.name), el("p", { class: "muted" }, op.brief))))));
+      }
+
+      const NODE_LABEL = { fight: "Enfrentamiento", find: "Hallazgo", hazard: "Peligro", rescue: "Civiles", rest: "Descanso", contact: "Contacto" };
+      const nodeName = (n) => (n.type === "fight" ? CONTENT.encounters[n.enc].name : CONTENT.nodes[n.id].name);
+      function renderMap(app) {
+        const op = CONTENT.operations[S.op];
+        app.append(el("div", { class: "panel map" },
+          el("h2", {}, "Mapa de la operación"),
+          el("p", { class: "muted" }, "Cada paso sube la inestabilidad. Si llega al máximo, toca extracción inmediata."),
+          op.layers.map((layer, i) => el("div", { class: "layer" }, layer.map((n) =>
+            el("button", { class: `node ${S.path.includes(n) ? "done" : ""}`, disabled: i !== S.layer, onclick: () => enterNode(n) },
+              el("span", { class: "tag" }, `${NODE_LABEL[n.type]}${n.final ? " · final" : ""}`), el("div", {}, nodeName(n))))))));
+      }
+
+      // Abanico de cartas flotando sobre la mano.
+      function fan(cards) {
+        const n = cards.length;
+        // Separación según el ancho disponible: abierto en escritorio, más apretado en móvil.
+        const avail = Math.min(780, document.documentElement.clientWidth - 80);
+        const cardW = avail < 420 ? 84 : 104;
+        const spread = n > 1 ? Math.min(cardW + 8, (avail - cardW) / (n - 1)) : 0;
+        return el("div", { class: "fan" }, cards.map((c, i) => {
+          const off = i - (n - 1) / 2;
+          return el("button", {
+            class: `card ${c.cls || ""} ${spread < cardW ? "tight" : ""}`,
+            style: `--dx:${off * spread}px; --dy:${Math.abs(off) * 8}px; --rot:${off * (spread < cardW ? 6 : 3)}deg; --delay:${(i * 0.37).toFixed(2)}s; width:${cardW}px; margin-left:${-cardW / 2}px`,
+            disabled: c.disabled,
+            "aria-label": `${c.name}. ${c.text} ${c.dcLabel || ""}`,
+            onclick: c.onclick,
+          },
+            el("span", { class: "kind" }, c.kind),
+            el("span", { class: "name" }, c.name),
+            el("span", { class: "glyph", "aria-hidden": "true" }, c.glyph),
+            el("span", { class: "dc" }, c.dcLabel || ""));
+        }));
+      }
+
+      function summonArea(cards, chosenPanel) {
+        if (chosenPanel) return el("div", { class: "summon invoked" }, chosenPanel, svg(HAND_SVG));
+        return el("div", { class: "summon" }, svg(HAND_SVG), fan(cards));
+      }
+
+      function renderEvent(app) {
+        const n = S.event;
+        const d = CONTENT.nodes[n.id];
+        const cards = eventCards(n);
+        const chosen = S.choice && S.choice.event;
+        const panel = chosen ? el("div", { class: "chosen" },
+          el("strong", {}, chosen.name), el("p", {}, chosen.text), el("p", {}, chosen.win),
+          chosen.dc ? el("div", { class: "odds" }, `Necesitas ${chosen.dc} o más · ${pct(chosen.dc)}`) : null,
+          el("div", { class: "row" },
+            el("button", { class: "primary", onclick: () => {
+              S.choice = null;
+              if (chosen.dc) throwDie(chosen.dc, chosen.name, (r) => chosen.act(r.ok)); else chosen.act(true);
+            } }, chosen.dc ? "Lanzar el d20" : "Hacerlo"),
+            el("button", { onclick: () => { S.choice = null; render(); } }, "Volver a la mano"))) : null;
+        app.append(el("div", { class: "arena" },
+          el("span", { class: "tag" }, NODE_LABEL[n.type]), el("h2", {}, d.name), el("p", {}, d.text),
+          summonArea(cards.map((c) => ({
+            ...c, dcLabel: c.dc ? `${c.dc}+ · ${pct(c.dc)}` : "sin tirada",
+            onclick: () => { S.choice = { event: c }; render(); },
+          })), panel)));
+      }
+
+      function renderFight(app) {
+        const f = S.fight;
+        const ch = S.choice;
+        const card = ch && CONTENT.cards[ch.card];
+        const needTarget = card && card.target && card.target !== "ally" && !ch.target;
+        const targets = card ? targetsFor(ch.card).map((t) => t.uid) : [];
+        const goal = {
+          contain: "Contener: derrotad o ahuyentad a las amenazas hostiles.",
+          evacuate: `Evacuar: ${f.rescued}/${f.civilians} civiles a salvo.`,
+          endure: "Resistir hasta el final de las rondas.",
+        }[f.enc.goal];
+
+        const threatEls = activeThreats().map((t) => {
+          const can = needTarget && targets.includes(t.uid);
+          const picked = ch && ch.target === t.uid;
+          return el(can ? "button" : "div", {
+            class: `threat ${t.calm && !t.provoked ? "calm" : ""} ${can || picked ? "targetable" : ""}`,
+            onclick: can ? () => { S.choice.target = t.uid; render(); } : null,
+          },
+            el("div", { class: "row" }, el("strong", {}, t.name), el("span", { class: "tag" }, t.kind),
+              t.weak ? el("span", { class: "tag" }, "punto débil") : null,
+              f.blocked.has(t.uid) ? el("span", { class: "tag" }, "frenado") : null),
+            el("div", { class: "bar" }, el("i", { style: `width:${(t.hp / t.hpMax) * 100}%` })),
+            el("small", {}, `Aguante ${t.hp}/${t.hpMax} · Defensa ${t.def} · Fuerza ${t.str}`),
+            el("div", { class: "intent" }, `→ ${intentText(t)}`));
+        });
+
+        let panel = null;
+        if (ch) {
+          const d = difficulty(ch);
+          const allyNeeded = card.target === "ally" && !ch.target;
+          panel = el("div", { class: "chosen" },
+            el("div", { class: "row" }, el("strong", {}, `${card.glyph} ${card.name}`), el("span", { class: "muted" }, member(card.owner).name)),
+            el("p", {}, `${card.text} Si sale bien: ${card.win}`),
+            needTarget ? el("p", {}, "Toca una amenaza para elegir el objetivo.")
+              : allyNeeded ? el("p", {}, "Toca a un miembro herido de la escuadra.")
+              : el("div", {},
+                el("div", { class: "odds" }, `Necesitas ${d.dc} o más · ${pct(d.dc)}`),
+                d.mods.length ? el("small", {}, d.mods.join(" · ")) : null),
+            card.owner === "tu" ? el("label", {},
+              el("input", { type: "checkbox", checked: ch.effort, disabled: S.stress >= 3 && !ch.effort,
+                onchange: (e) => { ch.effort = e.target.checked; render(); } }),
+              "Esforzarte: −3 a la dificultad, +1 estrés") : null,
+            ["atacar", "nucleo", "proteger"].includes(ch.card) ? el("label", {},
+              el("input", { type: "checkbox", checked: ch.overload, onchange: (e) => { ch.overload = e.target.checked; render(); } }),
+              `Sobrecargar el Núcleo: −6 a la dificultad, crisis +1 (${S.crisis}/3)`) : null,
+            el("div", { class: "row" },
+              el("button", { class: "primary", disabled: !d || allyNeeded, onclick: playChoice }, "Lanzar el d20"),
+              el("button", { onclick: () => { S.choice = null; render(); } }, "Volver a la mano")));
+        }
+
+        const handCards = f.hand.map((h) => {
+          const c = CONTENT.cards[h.key];
+          const single = c.target && c.target !== "ally" && targetsFor(h.key).length === 1 ? targetsFor(h.key)[0] : null;
+          const preview = !c.target ? c.dc(null, f) : single ? c.dc(single, f) : null;
+          return {
+            name: c.name, glyph: c.glyph, text: c.text, kind: c.fixed ? "siempre" : member(c.owner).name,
+            cls: c.fixed ? "flee" : "", disabled: !canPlay(h.key),
+            dcLabel: preview != null ? `${preview}+ · ${pct(preview)}` : "elige objetivo",
+            onclick: () => chooseCard(h),
+          };
+        });
+
+        app.append(el("div", { class: "arena" },
+          el("div", { class: "row" },
+            el("h2", { style: "margin:0" }, f.enc.name),
+            el("span", { class: "tag" }, `Ronda ${Math.min(f.round, f.enc.rounds)}/${f.enc.rounds}`),
+            el("span", { class: "tag" }, `Acciones ${CONTENT.actionsPerRound - f.actions}/${CONTENT.actionsPerRound}`),
+            f.breach ? el("span", { class: "tag bad" }, `Brecha ${f.breach}/3`) : null,
+            f.enc.reinforce && f.round < 3 ? el("span", { class: "tag bad" }, `Refuerzo en la ronda 3`) : null),
+          f.enc.note ? el("p", { class: "muted", style: "margin-top:6px" }, f.enc.note) : null,
+          el("p", { style: "margin-top:6px" }, goal),
+          el("div", { class: "threats" }, threatEls),
+          summonArea(handCards, panel),
+          ch ? null : el("div", { class: "row", style: "justify-content:center" },
+            el("button", { onclick: enemyPhase }, "Terminar la ronda"))));
+      }
+
+      function rollOverlay() {
+        const r = S.rolling;
+        const shown = r.settled ? r.n : "?";
+        const verdict = !r.settled ? "" : r.crit ? "¡Crítico!" : r.fumble ? "¡Pifia!" : r.ok ? "Éxito" : "Fallo";
+        const box = el("div", { class: "roll-box", role: "dialog", "aria-modal": "true", "aria-label": `Tirada de ${r.label}` },
+          el("div", {}, `${r.label} · necesitas ${r.dc} o más`),
+          svg(`<svg class="d20 ${r.settled ? "" : "spin"}" viewBox="0 0 100 100" aria-hidden="true">
+            <polygon points="50,4 92,28 92,72 50,96 8,72 8,28" fill="#2b3240" stroke="#cfe4ff" stroke-width="2"/>
+            <polygon points="50,22 76,66 24,66" fill="#3a4458" stroke="#cfe4ff" stroke-width="1.5"/>
+            <path d="M50,4 L50,22 M92,28 L76,66 M8,28 L24,66 M50,96 L24,66 M50,96 L76,66 M8,72 L24,66 M92,72 L76,66 M8,28 L50,22 M92,28 L50,22"
+              stroke="#cfe4ff" stroke-opacity="0.6" stroke-width="1.2" fill="none"/>
+            <text x="50" y="55" text-anchor="middle" font-size="22" font-weight="700" fill="#ffffff">${shown}</text>
+          </svg>`),
+          el("div", { class: `verdict ${r.ok ? "ok" : "ko"}`, "aria-live": "assertive" }, verdict),
+          r.settled ? el("button", { class: "primary", onclick: settleRoll }, "Continuar") : null);
+        const veil = el("div", { class: "roll-veil" }, box);
+        if (r.settled) setTimeout(() => box.querySelector("button")?.focus(), 0);
+        return veil;
+      }
+
+      function renderResult(app) {
+        const reasons = {
+          completed: "Operación completada.",
+          partial: "Operación completada a medias.",
+          failed: "La operación ha fallado.",
+          retreat: "Os retirasteis antes de terminar.",
+          extracted: "Salisteis por la extracción antes de llegar al objetivo.",
+          fallen: "Caíste en combate. En el juego completo, esto puede ser el final de tu vida.",
+        };
+        const skipped = CONTENT.operations[S.skipped];
+        app.append(el("div", { class: "panel" },
+          el("h2", {}, "Resultado"),
+          el("p", { class: S.result === "completed" ? "good" : "bad" }, reasons[S.result] || reasons.completed),
+          el("p", {}, `Civiles a salvo: ${S.saved} · sin salir: ${S.lost} · enfrentamientos ganados: ${S.fightsWon}/${S.fightsTotal}`),
+          el("p", {}, `Pistas para el tablero: ${S.pistas.length ? S.pistas.map((p) => `«${p}»`).join(", ") : "ninguna"}`),
+          el("h3", {}, "Mientras tanto, en el otro frente"),
+          el("p", {}, `${skipped.front}: ${pick(skipped.ifSkipped)}`),
+          el("p", { class: "muted" }, `Semilla ${seed}`),
+          el("div", { class: "row" },
+            el("button", { class: "primary", onclick: () => location.reload() }, "Otra operación"))));
+      }
+
+      render();
+    </script>
+  </body>
+</html>
